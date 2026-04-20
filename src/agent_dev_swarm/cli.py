@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 from pathlib import Path
 
 from agent_dev_swarm.validate_project import format_terminal_summary, validate_project
@@ -19,6 +20,12 @@ def build_parser() -> argparse.ArgumentParser:
         required=True,
         help="Path to the target project root",
     )
+    validate_parser.add_argument(
+        "--format",
+        choices=("text", "json"),
+        default="text",
+        help="Output format for validation results",
+    )
 
     return parser
 
@@ -29,7 +36,10 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "validate-project":
         result = validate_project(Path(args.project))
-        print(format_terminal_summary(result))
+        if args.format == "json":
+            print(json.dumps(result.to_dict(), indent=2))
+        else:
+            print(format_terminal_summary(result))
         return 0 if result.status == "success" else 1
 
     parser.error(f"Unsupported command: {args.command}")

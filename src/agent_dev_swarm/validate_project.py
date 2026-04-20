@@ -21,6 +21,13 @@ class CheckResult:
     status: str
     message: str
 
+    def to_dict(self) -> dict[str, str]:
+        return {
+            "name": self.name,
+            "status": self.status,
+            "message": self.message,
+        }
+
 
 @dataclass(slots=True)
 class ValidationResult:
@@ -31,6 +38,16 @@ class ValidationResult:
     missing_items: list[str] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
     parsed_config: dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "status": self.status,
+            "project_root": str(self.project_root),
+            "config_path": str(self.config_path),
+            "checks": [check.to_dict() for check in self.checks],
+            "missing_items": list(self.missing_items),
+            "errors": list(self.errors),
+        }
 
 
 def validate_project(project_root: Path) -> ValidationResult:
