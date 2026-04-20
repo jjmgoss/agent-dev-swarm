@@ -1,0 +1,84 @@
+feature_id: 001-validate-project
+name: validate-project
+goal: Validate that a target project is correctly attached to agent-dev-swarm.
+command_shape: "swarm validate-project --project <path>"
+
+inputs:
+required:
+- project_root_path
+
+project_expectations:
+required_project_file:
+- .swarm/project.yaml
+
+required_project_yaml_fields:
+
+project_name
+framework_checkout
+
+optional_project_yaml_fields:
+
+project_type
+language
+primary_goal
+task_dir
+runs_dir
+evidence_dir
+rules_doc
+artifact_spec_doc
+framework_architecture_doc
+bootstrap_plan_doc
+
+required_checks:
+
+name: project_config_exists
+description: ".swarm/project.yaml exists under the target project root."
+name: project_config_parses
+description: "The project YAML parses successfully."
+name: required_yaml_fields_present
+description: "Required YAML fields are present."
+name: framework_checkout_exists
+description: "The configured framework checkout path exists relative to the target project root."
+
+conditional_checks:
+
+name: referenced_doc_exists
+description: "If a referenced doc path is provided in the YAML, that file exists."
+
+success_definition:
+
+All required checks pass.
+
+failure_definition:
+
+Missing project config.
+Invalid YAML.
+Missing required YAML fields.
+Missing framework checkout.
+Missing referenced docs when those doc fields are provided.
+
+required_outputs:
+
+terminal_summary
+process_exit_code
+
+desired_outputs:
+
+structured_result_object
+
+exit_code_contract:
+success: 0
+failure: nonzero
+
+non_goals:
+
+Do not edit project files.
+Do not execute project tasks.
+Do not invoke worker models.
+Do not create run artifacts yet unless needed by implementation design.
+
+implementation_notes:
+
+Keep the command synchronous and local.
+Prefer explicit checks over inference.
+Make failure messages concrete and actionable.
