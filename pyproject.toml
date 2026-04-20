@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Minimal local orchestration framework for evidence-driven development"
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = ["PyYAML>=6.0,<7"]
 
 [project.scripts]
 swarm = "agent_dev_swarm.cli:main"
