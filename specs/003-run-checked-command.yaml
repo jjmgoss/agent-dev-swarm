@@ -1,0 +1,78 @@
+feature_id: 003-run-checked-command
+name: run-checked-command
+goal: Execute one proposed command only after it has been allowed by a task-scoped execution policy.
+command_shape: "swarm run-checked-command --project <path> --policy <file> --cwd <path> -- <command...>"
+
+inputs:
+  required:
+    - project_root_path
+    - policy_file_path
+    - candidate_working_directory
+    - candidate_command
+
+policy_expectations:
+  required_policy_fields:
+    - allowed_roots
+    - allowed_command_prefixes
+
+  optional_policy_fields:
+    - blocked_command_patterns
+    - timeout_seconds
+    - max_output_bytes
+    - allow_network
+    - allow_package_install
+    - allow_git_write
+
+required_checks:
+  - name: policy_file_exists
+    description: The supplied policy file exists.
+  - name: policy_parses
+    description: The policy YAML parses successfully.
+  - name: policy_fields_valid
+    description: Required policy fields are present and valid.
+  - name: cwd_within_allowed_roots
+    description: The proposed working directory resolves inside an allowed root.
+  - name: command_matches_allowed_prefix
+    description: The proposed command matches one configured allowed command prefix.
+  - name: command_blocked_pattern_absent
+    description: The proposed command does not match a blocked command pattern.
+  - name: command_execution_started
+    description: The framework started the command after policy approval.
+  - name: command_exit_code_zero
+    description: The command exited with status code 0.
+
+success_definition: |
+  The policy allows the command, the framework executes it, and the command exits with status code 0.
+
+failure_definition: |
+  Missing policy file.
+  Invalid YAML.
+  Invalid required policy fields.
+  Working directory outside allowed roots.
+  Command not on the allowlist.
+  Command matching a blocked pattern.
+  Command start failure.
+  Command timeout.
+  Command exiting nonzero.
+
+required_outputs:
+  - terminal_summary
+  - process_exit_code
+  - structured_result_object
+  - stdout_evidence
+  - stderr_evidence
+
+exit_code_contract:
+  success: 0
+  failure: nonzero
+
+non_goals: |
+  Do not add autonomous retries.
+  Do not add background process management.
+  Do not add multi-step task execution.
+  Do not add worker orchestration.
+
+implementation_notes: |
+  Reuse the existing policy gate before any subprocess call.
+  Capture stdout, stderr, and the child exit code explicitly.
+  If timeout_seconds is configured and exceeded, report timeout explicitly in the structured result.

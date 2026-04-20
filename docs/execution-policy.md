@@ -6,7 +6,10 @@ The execution policy defines the approved command envelope for one bounded task.
 
 The goal is to move approval from individual shell commands to a task-scoped policy.
 
-In the first implementation, the framework does not execute commands. It only loads a policy and determines whether a proposed command would be allowed or refused.
+The framework now supports two narrow primitives:
+
+- `check-command-policy`, which evaluates a proposed command without running it
+- `run-checked-command`, which executes one command only after it has been allowed by policy
 
 ## Intended Role
 
@@ -78,9 +81,9 @@ allow_git_write: false
 - The policy file path is resolved relative to the target project root unless it is absolute.
 - Commands are evaluated as normalized command strings produced from the provided argv tokens.
 
-## First-Pass Enforcement
+## Current Enforcement
 
-The first implementation enforces only these checks:
+The current implementation enforces these checks:
 
 1. policy file exists
 2. policy YAML parses
@@ -88,10 +91,10 @@ The first implementation enforces only these checks:
 4. proposed working directory is inside an allowed root
 5. proposed command matches an allowed command prefix
 6. proposed command does not contain a blocked command pattern
+7. `timeout_seconds` is enforced for `run-checked-command` when provided
 
-The following fields are currently parsed and returned but are not yet enforced:
+The following fields are currently parsed and returned but are not yet fully enforced:
 
-- `timeout_seconds`
 - `max_output_bytes`
 - `allow_network`
 - `allow_package_install`
@@ -118,12 +121,39 @@ Policy evaluation should return structured data that includes at least:
 
 This result is intended to be consumed by an orchestrator without relying on vague terminal prose.
 
+Checked command execution should return structured data that includes at least:
+
+- status: `success`, `failure`, `refused`, or `timeout`
+- project root
+- policy path
+- requested cwd
+- resolved cwd
+- command argv
+- normalized command text
+- checks
+- errors
+- execution performed
+- stdout
+- stderr
+- exit code
+
+If the command is refused, execution must not happen.
+
+If the command is allowed, the framework should execute it synchronously and capture explicit evidence.
+
+If a timeout occurs, the framework should report that explicitly instead of pretending the command exited normally.
+
 ## Non-Goals For This Step
 
 This step does not:
 
-- execute shell commands
 - retry commands
-- capture live command output
 - orchestrate workers
 - grant unconstrained shell access
+
+This step still does not:
+
+- add multi-step workflows
+- add background execution
+- add autonomous retries
+- add worker orchestration
