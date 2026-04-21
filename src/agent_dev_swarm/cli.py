@@ -22,6 +22,10 @@ from agent_dev_swarm.implementation_records import (
     format_implementation_record_init_summary,
     init_implementation_record,
 )
+from agent_dev_swarm.sandbox_fixtures import (
+    format_sandbox_materialization_summary,
+    materialize_sandbox_run,
+)
 from agent_dev_swarm.task_specs import format_task_spec_summary, load_task_spec
 from agent_dev_swarm.validate_project import format_terminal_summary, validate_project
 
@@ -251,6 +255,32 @@ def build_parser() -> argparse.ArgumentParser:
         help="Output format for the adjudication result",
     )
 
+    sandbox_parser = subparsers.add_parser(
+        "materialize-sandbox-run",
+        help="Materialize one disposable sandbox run workspace from a fixture",
+    )
+    sandbox_parser.add_argument(
+        "--fixture",
+        required=True,
+        help="Fixture name under sandbox/fixtures",
+    )
+    sandbox_parser.add_argument(
+        "--run-id",
+        required=True,
+        help="Run identifier under sandbox/runs",
+    )
+    sandbox_parser.add_argument(
+        "--force-reset",
+        action="store_true",
+        help="Wipe the existing run directory before recreating it",
+    )
+    sandbox_parser.add_argument(
+        "--format",
+        choices=("text", "json"),
+        default="text",
+        help="Output format for the sandbox materialization result",
+    )
+
     return parser
 
 
@@ -370,6 +400,18 @@ def main(argv: list[str] | None = None) -> int:
         else:
             print(format_adjudication_summary(result))
         return 0 if result.decision in ("accept", "retry", "escalate") else 1
+
+    if args.subcommand == "materialize-sandbox-run":
+        result = materialize_sandbox_run(
+            fixture_name=args.fixture,
+            run_id=args.run_id,
+            force_reset=args.force_reset,
+        )
+        if args.format == "json":
+            print(json.dumps(result.to_dict(), indent=2))
+        else:
+            print(format_sandbox_materialization_summary(result))
+        return 0 if result.status == "success" else 1
 
     parser.error(f"Unsupported command: {args.subcommand}")
     return 2

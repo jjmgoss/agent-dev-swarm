@@ -1,0 +1,24 @@
+fixture_id: tiny-calculator
+description: Small sandbox fixture with one tiny Python module, one tiny test, one task spec, and one execution policy.
+layout_version: "1"
+source_root: project
+materialized_paths:
+  - README.md
+  - src
+  - tests
+  - .swarm/tasks
+  - .swarm/execution-policy.yaml
+editable_paths:
+  - src
+read_only_paths:
+  - README.md
+  - tests
+  - .swarm/tasks
+  - .swarm/execution-policy.yaml
+generated_paths:
+  - .swarm/evidence
+  - .swarm/results
+  - .swarm/implementation-records
+default_task_spec: .swarm/tasks/issue-sandbox-1.yaml
+default_policy: .swarm/execution-policy.yaml
+intended_outcome: accept

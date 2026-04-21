@@ -1,0 +1,112 @@
+feature_id: 006-sandbox-fixtures
+name: sandbox-fixtures
+goal: Define the first disposable in-repo sandbox fixture system and materialize one fresh run workspace from one reusable fixture.
+
+commands:
+  - materialize-sandbox-run --fixture <name> --run-id <id> [--force-reset]
+
+inputs:
+  materialize_sandbox_run:
+    required:
+      - fixture_name
+      - run_id
+    optional:
+      - force_reset
+
+directory_layout:
+  fixture_root:
+    - sandbox/fixtures/<fixture-name>
+  run_root:
+    - sandbox/runs/<run-id>
+  run_subdirectories:
+    - workspace
+    - artifacts
+  artifact_subdirectories:
+    - task-input
+    - policy-input
+    - handoff
+    - commands
+    - worker-result
+    - adjudication
+    - implementation-record
+    - summary
+
+fixture_manifest:
+  required_fields:
+    - fixture_id
+    - description
+    - layout_version
+    - source_root
+    - materialized_paths
+    - editable_paths
+    - read_only_paths
+    - generated_paths
+    - intended_outcome
+
+  optional_fields:
+    - default_task_spec
+    - default_policy
+
+  current_constraints:
+    - layout_version must equal "1"
+    - source_root must be a directory under the fixture root
+    - materialized_paths must be relative paths under source_root
+    - editable_paths must be relative paths
+    - read_only_paths must be relative paths
+    - generated_paths must be relative paths
+    - default_task_spec must remain inside source_root when provided
+    - default_policy must remain inside source_root when provided
+
+required_checks:
+  - name: fixture_valid
+    description: The fixture name is a simple safe identifier.
+  - name: run_id_valid
+    description: The run id is a simple safe identifier.
+  - name: fixture_directory_exists
+    description: The requested fixture directory exists.
+  - name: fixture_manifest_exists
+    description: The fixture manifest exists.
+  - name: fixture_manifest_parses
+    description: The fixture manifest YAML parses successfully.
+  - name: fixture_manifest_top_level_mapping
+    description: The fixture manifest top-level YAML value is a mapping.
+  - name: fixture_manifest_fields_valid
+    description: Required manifest fields are present and valid.
+  - name: run_root_ready
+    description: The target run root is absent or explicitly resettable.
+  - name: run_metadata_written
+    description: The materializer writes a run-info.json file describing the run inputs and layout.
+
+success_definition: |
+  The fixture exists, the manifest validates, the run root is created or explicitly reset, the declared fixture content is copied into a fresh workspace, and the standard artifact scaffold is created.
+
+failure_definition: |
+  Missing fixture directory.
+  Missing manifest.
+  Invalid YAML.
+  Invalid required manifest fields.
+  Fixture content referenced by the manifest that is missing.
+  Existing run root without explicit reset permission.
+
+required_outputs:
+  - terminal_summary
+  - process_exit_code
+  - structured_result_object
+  - run_info_json
+
+exit_code_contract:
+  success: 0
+  failure: nonzero
+
+non_goals: |
+  Do not execute worker tasks.
+  Do not add Docker or container execution yet.
+  Do not add autonomous loops.
+  Do not capture the full artifact bundle automatically in this issue.
+  Do not enforce full machine isolation in this issue.
+
+implementation_notes: |
+  Keep the first slice file-based and deterministic.
+  Separate reusable fixture definitions from per-run outputs.
+  Make explicit reset behavior required for destructive recreation.
+  Leave obvious stable directories for future structured artifact capture.

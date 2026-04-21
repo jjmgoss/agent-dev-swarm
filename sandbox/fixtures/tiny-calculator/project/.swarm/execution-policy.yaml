@@ -1,0 +1,16 @@
+allowed_roots:
+  - .
+  - src
+  - tests
+
+allowed_command_prefixes:
+  - python -m unittest
+
+blocked_command_patterns:
+  - git reset --hard
+
+timeout_seconds: 60
+max_output_bytes: 50000
+allow_network: false
+allow_package_install: false
+allow_git_write: false

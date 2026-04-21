@@ -1,0 +1,31 @@
+task_id: issue-sandbox-1
+title: Inspect tiny calculator sandbox fixture
+goal: Materialize a tiny sandbox run and inspect its bounded workspace layout.
+
+scope:
+  - Materialize one fresh sandbox run from the tiny-calculator fixture.
+  - Confirm the workspace contains the declared fixture content.
+  - Confirm the artifact scaffold exists.
+
+non_goals:
+  - Do not execute autonomous worker flows.
+  - Do not modify files outside the sandbox run workspace.
+
+required_outputs:
+  - Fresh workspace directory.
+  - Fresh artifact scaffold.
+  - Structured materialization result.
+
+success_criteria:
+  - The run workspace is created from the fixture manifest.
+  - Reset behavior is explicit and deterministic.
+  - The materialization result reports fixture and run paths clearly.
+
+notes: Use this fixture to validate sandbox reset and replay shape before broader staging use.
+allowed_roots:
+  - .
+  - src
+  - tests
+verification_commands:
+  - python -m unittest discover -s tests -v
+implementation_record_path: .swarm/implementation-records/issue-sandbox-1.md
