@@ -1,0 +1,56 @@
+{
+  "handoff_version": "1",
+  "task_id": "issue-3",
+  "title": "Add task-spec loading contract",
+  "goal": "Load and validate one bounded task spec from a target project's .swarm/tasks directory.",
+  "scope": [
+    "Add one loader that resolves a task file from a task id or an explicit path.",
+    "Validate required fields and optional fields with explicit messages.",
+    "Return structured text and JSON results."
+  ],
+  "non_goals": [
+    "Do not execute the task.",
+    "Do not create worker orchestration.",
+    "Do not derive execution policy automatically."
+  ],
+  "required_outputs": [
+    "Structured load result object.",
+    "Text summary for CLI use.",
+    "Unit test coverage for valid and invalid task specs."
+  ],
+  "success_criteria": [
+    "A valid task spec loads successfully.",
+    "Missing or malformed task specs fail with inspectable errors.",
+    "JSON output returns the normalized task object on success."
+  ],
+  "project_root": "C:/example-project",
+  "worker_role": "implementation-worker",
+  "expected_result_fields": [
+    "task_id",
+    "worker_role",
+    "status",
+    "summary",
+    "actions_performed",
+    "files_read",
+    "files_changed",
+    "commands_run",
+    "command_results",
+    "verification_status",
+    "required_outputs_status",
+    "success_criteria_status",
+    "unresolved_issues",
+    "escalation_notes"
+  ],
+  "notes": "Keep the schema small and inspectable.",
+  "allowed_roots": [
+    "src",
+    "tests"
+  ],
+  "suggested_commands": [
+    "python -m unittest discover -s tests -v"
+  ],
+  "verification_commands": [
+    "python -m unittest discover -s tests -v"
+  ],
+  "implementation_record_path": ".swarm/implementation-records/issue-3-load-task-spec.md"
+}

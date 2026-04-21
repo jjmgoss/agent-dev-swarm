@@ -10,6 +10,12 @@ from agent_dev_swarm.execution_policy import (
     format_policy_decision_summary,
     run_checked_command,
 )
+from agent_dev_swarm.handoff_adjudication import (
+    adjudicate_worker_result_file,
+    build_worker_handoff,
+    format_adjudication_summary,
+    format_worker_handoff_summary,
+)
 from agent_dev_swarm.implementation_records import (
     ImplementationRecordDraft,
     ImplementationRecordError,
@@ -199,6 +205,52 @@ def build_parser() -> argparse.ArgumentParser:
         help="Output format for the task spec result",
     )
 
+    handoff_parser = subparsers.add_parser(
+        "build-worker-handoff",
+        help="Build a normalized worker handoff payload from one task spec",
+    )
+    handoff_parser.add_argument(
+        "--project",
+        required=True,
+        help="Path to the target project root",
+    )
+    handoff_parser.add_argument(
+        "--task",
+        required=True,
+        help="Task id or path to the task spec file",
+    )
+    handoff_parser.add_argument(
+        "--worker-role",
+        required=True,
+        help="Worker role to place in the handoff payload",
+    )
+    handoff_parser.add_argument(
+        "--policy-reference",
+        help="Optional policy file reference to include in the handoff",
+    )
+    handoff_parser.add_argument(
+        "--format",
+        choices=("text", "json"),
+        default="text",
+        help="Output format for the handoff result",
+    )
+
+    adjudication_parser = subparsers.add_parser(
+        "adjudicate-worker-result",
+        help="Validate and adjudicate one worker result JSON payload",
+    )
+    adjudication_parser.add_argument(
+        "--input",
+        required=True,
+        help="Path to the worker result JSON file",
+    )
+    adjudication_parser.add_argument(
+        "--format",
+        choices=("text", "json"),
+        default="text",
+        help="Output format for the adjudication result",
+    )
+
     return parser
 
 
@@ -297,6 +349,27 @@ def main(argv: list[str] | None = None) -> int:
         else:
             print(format_task_spec_summary(result))
         return 0 if result.status == "success" else 1
+
+    if args.subcommand == "build-worker-handoff":
+        result = build_worker_handoff(
+            project_root=Path(args.project),
+            task=args.task,
+            worker_role=args.worker_role,
+            policy_reference=args.policy_reference,
+        )
+        if args.format == "json":
+            print(json.dumps(result.to_dict(), indent=2))
+        else:
+            print(format_worker_handoff_summary(result))
+        return 0 if result.status == "success" else 1
+
+    if args.subcommand == "adjudicate-worker-result":
+        result = adjudicate_worker_result_file(Path(args.input))
+        if args.format == "json":
+            print(json.dumps(result.to_dict(), indent=2))
+        else:
+            print(format_adjudication_summary(result))
+        return 0 if result.decision in ("accept", "retry", "escalate") else 1
 
     parser.error(f"Unsupported command: {args.subcommand}")
     return 2

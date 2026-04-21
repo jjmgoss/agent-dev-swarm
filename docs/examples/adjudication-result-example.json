@@ -1,0 +1,41 @@
+{
+  "task_id": "issue-3",
+  "decision": "accept",
+  "reason": "Worker result satisfies the bounded task and needs no escalation.",
+  "status": "adjudicated",
+  "required_outputs_satisfied": true,
+  "success_criteria_satisfied": true,
+  "unresolved_issues_present": false,
+  "escalation_requested": false,
+  "next_action": "Accept the bounded result and update the implementation record.",
+  "input_path": "C:/example-project/.swarm/results/issue-3-worker-result.json",
+  "worker_result_status": "success",
+  "checks": [
+    {
+      "name": "required_outputs_satisfied",
+      "status": "pass",
+      "message": "All required outputs are satisfied."
+    },
+    {
+      "name": "success_criteria_satisfied",
+      "status": "pass",
+      "message": "All success criteria are satisfied."
+    },
+    {
+      "name": "unresolved_issues_absent",
+      "status": "pass",
+      "message": "No unresolved issues remain."
+    },
+    {
+      "name": "escalation_requested_absent",
+      "status": "pass",
+      "message": "No escalation was requested."
+    },
+    {
+      "name": "adjudication_decision",
+      "status": "pass",
+      "message": "Adjudication accepted the worker result."
+    }
+  ],
+  "errors": []
+}

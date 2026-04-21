@@ -1,0 +1,143 @@
+feature_id: 005-handoff-and-adjudication
+name: handoff-and-adjudication
+goal: Define the first explicit orchestrator-to-worker handoff contract and the first adjudication loop for bounded task results.
+
+commands:
+  - build-worker-handoff --project <path> --task <id-or-path> --worker-role <role>
+  - adjudicate-worker-result --input <worker-result.json>
+
+inputs:
+  build_worker_handoff:
+    required:
+      - project_root_path
+      - task_id_or_task_file_path
+      - worker_role
+    optional:
+      - policy_reference
+
+  adjudicate_worker_result:
+    required:
+      - worker_result_json_file
+
+handoff_payload:
+  required_fields:
+    - handoff_version
+    - task_id
+    - title
+    - goal
+    - scope
+    - non_goals
+    - required_outputs
+    - success_criteria
+    - project_root
+    - worker_role
+    - expected_result_fields
+
+  optional_fields:
+    - notes
+    - allowed_roots
+    - suggested_commands
+    - verification_commands
+    - implementation_record_path
+    - policy_reference
+
+worker_result_payload:
+  required_fields:
+    - task_id
+    - worker_role
+    - status
+    - summary
+    - actions_performed
+    - files_read
+    - files_changed
+    - commands_run
+    - command_results
+    - verification_status
+    - required_outputs_status
+    - success_criteria_status
+    - unresolved_issues
+    - escalation_notes
+
+  status_values:
+    - success
+    - failure
+    - partial
+    - blocked
+
+  verification_status_values:
+    - not_run
+    - passed
+    - failed
+    - mixed
+
+  item_status_values:
+    - satisfied
+    - missing
+    - partial
+    - not_evaluated
+
+adjudication_output:
+  required_fields:
+    - task_id
+    - decision
+    - reason
+    - status
+    - required_outputs_satisfied
+    - success_criteria_satisfied
+    - unresolved_issues_present
+    - escalation_requested
+    - next_action
+
+  decision_values:
+    - accept
+    - reject
+    - retry
+    - escalate
+
+required_checks:
+  - name: task_spec_valid
+    description: The handoff builder only proceeds from a valid loaded task spec.
+  - name: worker_role_valid
+    description: The worker role is a non-empty string.
+  - name: worker_result_top_level_mapping
+    description: The worker result payload is a JSON object.
+  - name: worker_result_required_fields_present
+    description: Required worker result fields are present.
+  - name: worker_result_string_fields_valid
+    description: Required worker result string fields are valid.
+  - name: worker_result_status_valid
+    description: Worker result status uses an explicit allowed value.
+  - name: worker_result_verification_status_valid
+    description: Verification status uses an explicit allowed value.
+  - name: worker_result_command_results_valid
+    description: Command result entries have the expected object shape.
+  - name: worker_result_required_outputs_status_valid
+    description: Required output status entries have the expected object shape.
+  - name: worker_result_success_criteria_status_valid
+    description: Success criteria status entries have the expected object shape.
+  - name: adjudication_decision
+    description: The adjudicator returns one explicit deterministic decision.
+
+decision_semantics:
+  accept: |
+    Use accept when worker status is success, all required outputs are satisfied, all success criteria are satisfied, unresolved issues are absent, and no escalation is requested.
+
+  reject: |
+    Use reject when the worker result payload is malformed, unreadable, or otherwise not trustworthy as a bounded completion artifact.
+
+  retry: |
+    Use retry when the payload is valid but the task is not complete and no escalation is requested.
+
+  escalate: |
+    Use escalate when the worker result is blocked or explicitly requests escalation.
+
+non_goals: |
+  Do not add live orchestrator runtime behavior.
+  Do not call model-provider APIs.
+  Do not execute worker tasks in this feature.
+  Do not add autonomous loops or background daemons.
+
+implementation_notes: |
+  Keep the contracts JSON-friendly and deterministic.
+  Validate worker result payloads before adjudicating them.
+  Reserve reject primarily for invalid or untrustworthy payloads.

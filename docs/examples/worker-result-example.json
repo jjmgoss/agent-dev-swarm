@@ -1,0 +1,67 @@
+{
+  "task_id": "issue-3",
+  "worker_role": "implementation-worker",
+  "status": "success",
+  "summary": "Implemented task-spec loading and verified text and JSON output.",
+  "actions_performed": [
+    "Added the task-spec loader module.",
+    "Added CLI support for load-task-spec.",
+    "Added docs, examples, and tests."
+  ],
+  "files_read": [
+    "docs/architecture.md",
+    "docs/task-specs.md",
+    "src/agent_dev_swarm/task_specs.py"
+  ],
+  "files_changed": [
+    "src/agent_dev_swarm/task_specs.py",
+    "src/agent_dev_swarm/cli.py",
+    "docs/task-specs.md",
+    "tests/test_task_specs.py"
+  ],
+  "commands_run": [
+    "python -m unittest discover -s tests -v",
+    "python -m agent_dev_swarm.cli load-task-spec --project <tempdir> --task issue-3",
+    "python -m agent_dev_swarm.cli load-task-spec --project <tempdir> --task issue-3 --format json"
+  ],
+  "command_results": [
+    {
+      "command": "python -m unittest discover -s tests -v",
+      "outcome": "success",
+      "exit_code": 0,
+      "summary": "The unit suite passed.",
+      "evidence_ref": ".swarm/evidence/test-suite.json"
+    }
+  ],
+  "verification_status": "passed",
+  "required_outputs_status": [
+    {
+      "name": "Structured load result object.",
+      "status": "satisfied"
+    },
+    {
+      "name": "Text summary for CLI use.",
+      "status": "satisfied"
+    },
+    {
+      "name": "Unit test coverage for valid and invalid task specs.",
+      "status": "satisfied"
+    }
+  ],
+  "success_criteria_status": [
+    {
+      "name": "A valid task spec loads successfully.",
+      "status": "satisfied"
+    },
+    {
+      "name": "Missing or malformed task specs fail with inspectable errors.",
+      "status": "satisfied"
+    },
+    {
+      "name": "JSON output returns the normalized task object on success.",
+      "status": "satisfied"
+    }
+  ],
+  "unresolved_issues": [],
+  "escalation_notes": []
+}
