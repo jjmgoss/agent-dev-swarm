@@ -1,0 +1,77 @@
+feature_id: 004-load-task-spec
+name: load-task-spec
+goal: Load and validate one bounded task spec from a target project's .swarm/tasks directory.
+command_shape: "swarm load-task-spec --project <path> --task <path-or-id>"
+
+inputs:
+  required:
+    - project_root_path
+    - task_id_or_task_file_path
+
+task_expectations:
+  default_task_directory:
+    - .swarm/tasks
+
+  required_task_fields:
+    - task_id
+    - title
+    - goal
+    - scope
+    - non_goals
+    - required_outputs
+    - success_criteria
+
+  optional_task_fields:
+    - notes
+    - allowed_roots
+    - suggested_commands
+    - verification_commands
+    - implementation_record_path
+
+required_checks:
+  - name: task_file_exists
+    description: The requested task spec file exists after path or id resolution.
+  - name: task_yaml_parses
+    description: The task spec YAML parses successfully.
+  - name: task_top_level_mapping
+    description: The task spec top-level YAML structure is a mapping.
+  - name: required_task_fields_present
+    description: All required task fields are present.
+  - name: required_task_string_fields_valid
+    description: Required string fields are non-empty strings.
+  - name: required_task_list_fields_valid
+    description: Required list fields are non-empty lists of non-empty strings.
+  - name: optional_task_fields_valid
+    description: Optional fields are valid when they are present.
+
+success_definition: |
+  The requested task file resolves successfully, parses as YAML, matches the required schema, and returns a normalized task object.
+
+failure_definition: |
+  Missing task file.
+  Invalid YAML.
+  Top-level YAML value that is not a mapping.
+  Missing required fields.
+  Required string fields that are empty or not strings.
+  Required list fields that are empty, not lists, or contain invalid entries.
+  Optional fields with invalid types or invalid entries.
+
+required_outputs:
+  - terminal_summary
+  - process_exit_code
+  - structured_result_object
+
+exit_code_contract:
+  success: 0
+  failure: nonzero
+
+non_goals: |
+  Do not execute the task.
+  Do not infer execution policy.
+  Do not add worker orchestration.
+  Do not create multi-step workflows.
+
+implementation_notes: |
+  Keep task id resolution simple and predictable.
+  Prefer explicit field checks over inference.
+  Return validation failures with concrete field-level messages.

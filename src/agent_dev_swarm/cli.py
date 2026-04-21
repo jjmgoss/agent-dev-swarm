@@ -16,6 +16,7 @@ from agent_dev_swarm.implementation_records import (
     format_implementation_record_init_summary,
     init_implementation_record,
 )
+from agent_dev_swarm.task_specs import format_task_spec_summary, load_task_spec
 from agent_dev_swarm.validate_project import format_terminal_summary, validate_project
 
 
@@ -177,6 +178,27 @@ def build_parser() -> argparse.ArgumentParser:
         help="Optional structured evidence reference to prefill; may be repeated",
     )
 
+    task_parser = subparsers.add_parser(
+        "load-task-spec",
+        help="Load and validate one bounded task spec from a target project",
+    )
+    task_parser.add_argument(
+        "--project",
+        required=True,
+        help="Path to the target project root",
+    )
+    task_parser.add_argument(
+        "--task",
+        required=True,
+        help="Task id or path to the task spec file",
+    )
+    task_parser.add_argument(
+        "--format",
+        choices=("text", "json"),
+        default="text",
+        help="Output format for the task spec result",
+    )
+
     return parser
 
 
@@ -267,6 +289,14 @@ def main(argv: list[str] | None = None) -> int:
         else:
             print(format_implementation_record_init_summary(result))
         return 0
+
+    if args.subcommand == "load-task-spec":
+        result = load_task_spec(project_root=Path(args.project), task=args.task)
+        if args.format == "json":
+            print(json.dumps(result.to_dict(), indent=2))
+        else:
+            print(format_task_spec_summary(result))
+        return 0 if result.status == "success" else 1
 
     parser.error(f"Unsupported command: {args.subcommand}")
     return 2
