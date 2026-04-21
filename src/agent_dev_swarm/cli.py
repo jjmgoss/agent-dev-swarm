@@ -26,6 +26,10 @@ from agent_dev_swarm.sandbox_fixtures import (
     format_sandbox_materialization_summary,
     materialize_sandbox_run,
 )
+from agent_dev_swarm.supervised_runs import (
+    format_supervised_run_summary,
+    scaffold_supervised_run,
+)
 from agent_dev_swarm.task_specs import format_task_spec_summary, load_task_spec
 from agent_dev_swarm.validate_project import format_terminal_summary, validate_project
 
@@ -281,6 +285,40 @@ def build_parser() -> argparse.ArgumentParser:
         help="Output format for the sandbox materialization result",
     )
 
+    supervised_run_parser = subparsers.add_parser(
+        "scaffold-supervised-run",
+        help="Create the supervised artifact scaffold for one materialized sandbox run",
+    )
+    supervised_run_parser.add_argument(
+        "--run-id",
+        required=True,
+        help="Run identifier under sandbox/runs",
+    )
+    supervised_run_parser.add_argument(
+        "--worker-role",
+        required=True,
+        help="Worker role to place in the handoff and worker-result starter",
+    )
+    supervised_run_parser.add_argument(
+        "--task",
+        help="Optional task id or workspace-relative task spec path override",
+    )
+    supervised_run_parser.add_argument(
+        "--policy",
+        help="Optional workspace-relative execution policy path override",
+    )
+    supervised_run_parser.add_argument(
+        "--force-overwrite",
+        action="store_true",
+        help="Overwrite existing supervised-run artifacts when they already exist",
+    )
+    supervised_run_parser.add_argument(
+        "--format",
+        choices=("text", "json"),
+        default="text",
+        help="Output format for the supervised run scaffold result",
+    )
+
     return parser
 
 
@@ -411,6 +449,20 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps(result.to_dict(), indent=2))
         else:
             print(format_sandbox_materialization_summary(result))
+        return 0 if result.status == "success" else 1
+
+    if args.subcommand == "scaffold-supervised-run":
+        result = scaffold_supervised_run(
+            run_id=args.run_id,
+            worker_role=args.worker_role,
+            task=args.task,
+            policy=args.policy,
+            force_overwrite=args.force_overwrite,
+        )
+        if args.format == "json":
+            print(json.dumps(result.to_dict(), indent=2))
+        else:
+            print(format_supervised_run_summary(result))
         return 0 if result.status == "success" else 1
 
     parser.error(f"Unsupported command: {args.subcommand}")

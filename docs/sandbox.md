@@ -142,6 +142,46 @@ swarm materialize-sandbox-run --fixture <name> --run-id <id> --force-reset
 
 That wipes the existing run directory and materializes it again from the fixture manifest.
 
+## Supervised Run Scaffold
+
+After a sandbox run exists, the next narrow setup step is:
+
+```text
+swarm scaffold-supervised-run --run-id <id> --worker-role <role>
+```
+
+This command does not execute the task.
+
+It only prepares the next stable artifact set for one bounded supervised attempt by:
+
+- reading `run-info.json`
+- resolving the default or explicit task spec
+- resolving the default or explicit policy reference when available
+- building the worker handoff payload
+- creating a starter worker-result payload
+- writing a run-plan artifact that records what the run is about
+
+The current artifact outputs are:
+
+- `artifacts/task-input/task-spec.json`
+- `artifacts/policy-input/policy-reference.json`
+- `artifacts/handoff/worker-handoff.json`
+- `artifacts/worker-result/worker-result-starter.json`
+- `artifacts/summary/run-plan.json`
+
+The starter worker-result payload is intentionally incomplete but structurally valid.
+
+It prefills:
+
+- `task_id`
+- `worker_role`
+- `required_outputs_status` item names
+- `success_criteria_status` item names
+
+It leaves evidence-bearing fields empty and uses placeholder summary text instead of inventing work that did not happen.
+
+If those artifact files already exist, the scaffold refuses by default. Use `--force-overwrite` to regenerate them explicitly.
+
 ## Replayability
 
 This first slice supports replayability in a narrow, explicit way:
@@ -192,5 +232,12 @@ This first slice does not yet:
 - scrub environment variables
 - manage background processes
 - implement a full workflow engine
+
+The supervised run scaffold also does not yet:
+
+- execute commands automatically
+- fill worker-result evidence automatically
+- adjudicate automatically
+- write implementation records automatically
 
 Those are later steps. The goal here is to establish a clean disposable scenario system that later work can build on.

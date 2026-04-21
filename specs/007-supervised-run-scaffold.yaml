@@ -1,0 +1,114 @@
+feature_id: 007-supervised-run-scaffold
+name: supervised-run-scaffold
+goal: Scaffold one bounded supervised sandbox run by resolving the run context, creating the worker handoff artifact, and generating a starter worker-result artifact.
+
+commands:
+  - scaffold-supervised-run --run-id <id> --worker-role <role> [--task <path-or-id>] [--policy <path>] [--force-overwrite]
+
+inputs:
+  scaffold_supervised_run:
+    required:
+      - run_id
+      - worker_role
+    optional:
+      - task_id_or_task_file_path_override
+      - policy_file_path_override
+      - force_overwrite
+
+resolution_rules:
+  - Read sandbox/runs/<run-id>/run-info.json.
+  - Use workspace_root from run metadata as the project root for task and handoff resolution.
+  - If --task is provided, resolve it from the workspace root unless absolute.
+  - Otherwise use manifest.default_task_spec from run-info.json.
+  - If --policy is provided, resolve it from the workspace root unless absolute.
+  - Otherwise use manifest.default_policy from run-info.json when present.
+  - If no policy is available, continue and record that no policy path was resolved.
+
+artifact_outputs:
+  - artifacts/task-input/task-spec.json
+  - artifacts/policy-input/policy-reference.json
+  - artifacts/handoff/worker-handoff.json
+  - artifacts/worker-result/worker-result-starter.json
+  - artifacts/summary/run-plan.json
+
+worker_result_starter:
+  required_behavior:
+    - prefill task_id from the worker handoff
+    - prefill worker_role from the worker handoff
+    - prefill required_outputs_status item names from the handoff required_outputs list
+    - prefill success_criteria_status item names from the handoff success_criteria list
+    - leave evidence-bearing fields empty
+    - use explicit non-completion defaults instead of invented evidence
+
+  default_values:
+    status: partial
+    verification_status: not_run
+    actions_performed: []
+    files_read: []
+    files_changed: []
+    commands_run: []
+    command_results: []
+    unresolved_issues: []
+    escalation_notes: []
+
+required_checks:
+  - name: run_id_valid
+    description: The run id is a simple safe identifier.
+  - name: worker_role_valid
+    description: The worker role is a non-empty string.
+  - name: run_root_exists
+    description: The requested sandbox run directory exists.
+  - name: run_metadata_exists
+    description: The sandbox run metadata file exists.
+  - name: run_metadata_parses
+    description: The run metadata parses successfully.
+  - name: run_metadata_shape_valid
+    description: The run metadata contains the required workspace and manifest fields.
+  - name: workspace_root_exists
+    description: The sandbox workspace exists.
+  - name: artifacts_root_exists
+    description: The sandbox artifacts root exists.
+  - name: task_path_resolved
+    description: The task spec path resolves deterministically.
+  - name: policy_path_resolved
+    description: The policy path resolves deterministically or is explicitly absent.
+  - name: artifact_paths_writable
+    description: The scaffold artifact files are available or explicitly overwritten.
+  - name: supervised_run_artifacts_written
+    description: The scaffold writes the expected task, policy, handoff, worker-result starter, and run-plan artifacts.
+
+success_definition: |
+  The sandbox run metadata loads, the task spec resolves and validates, the worker handoff builds successfully, and the supervised artifact scaffold is written to stable artifact paths.
+
+failure_definition: |
+  Missing sandbox run directory.
+  Missing or invalid run-info.json.
+  Missing default task spec when no override is provided.
+  Invalid task spec.
+  Missing default policy when an explicit default is expected.
+  Existing scaffold artifacts without explicit overwrite permission.
+
+required_outputs:
+  - terminal_summary
+  - process_exit_code
+  - structured_result_object
+  - worker_handoff_artifact
+  - worker_result_starter_artifact
+  - run_plan_artifact
+
+exit_code_contract:
+  success: 0
+  failure: nonzero
+
+non_goals: |
+  Do not execute the task.
+  Do not run commands automatically.
+  Do not adjudicate automatically.
+  Do not add a live orchestrator runtime.
+  Do not add provider integrations.
+  Do not add autonomous loops.
+
+implementation_notes: |
+  Reuse the existing task-spec loader and worker handoff builder.
+  Keep artifact paths stable and obvious.
+  Generate a worker-result starter that is structurally valid without inventing evidence.
