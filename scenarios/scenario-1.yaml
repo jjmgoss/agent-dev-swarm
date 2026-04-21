@@ -1,0 +1,18 @@
+scenario_id: scenario-1
+description: Run one local-only review-first subtract scenario against the tiny-calculator sandbox fixture.
+scenario_version: "1"
+fixture: tiny-calculator
+task: .swarm/tasks/issue-sandbox-2-add-subtract.yaml
+policy: .swarm/execution-policy.yaml
+worker_role: implementation-worker
+provider: ollama
+model: qwen3.5:4b
+allow_remote_models: false
+reset_before_run: true
+expected_outcome: reviewable-local-worker-output
+run_id_prefix: scenario-1
+context_files:
+  - src/calculator.py
+  - tests/test_calculator.py
+timeout_seconds: 180
+notes: This first scenario captures one bounded local model response and stops in a reviewable state without automatic code application.

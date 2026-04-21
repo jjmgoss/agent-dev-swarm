@@ -26,6 +26,7 @@ from agent_dev_swarm.sandbox_fixtures import (
     format_sandbox_materialization_summary,
     materialize_sandbox_run,
 )
+from agent_dev_swarm.scenarios import format_scenario_run_summary, run_scenario
 from agent_dev_swarm.supervised_runs import (
     format_supervised_run_summary,
     scaffold_supervised_run,
@@ -319,6 +320,21 @@ def build_parser() -> argparse.ArgumentParser:
         help="Output format for the supervised run scaffold result",
     )
 
+    scenario_parser = subparsers.add_parser(
+        "run-scenario",
+        help="Run one configured local-only sandbox scenario by id",
+    )
+    scenario_parser.add_argument(
+        "scenario",
+        help="Scenario id or path to a scenario YAML file",
+    )
+    scenario_parser.add_argument(
+        "--format",
+        choices=("text", "json"),
+        default="text",
+        help="Output format for the scenario run result",
+    )
+
     return parser
 
 
@@ -463,6 +479,14 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps(result.to_dict(), indent=2))
         else:
             print(format_supervised_run_summary(result))
+        return 0 if result.status == "success" else 1
+
+    if args.subcommand == "run-scenario":
+        result = run_scenario(args.scenario)
+        if args.format == "json":
+            print(json.dumps(result.to_dict(), indent=2))
+        else:
+            print(format_scenario_run_summary(result))
         return 0 if result.status == "success" else 1
 
     parser.error(f"Unsupported command: {args.subcommand}")

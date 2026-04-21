@@ -1,0 +1,115 @@
+feature_id: 008-run-scenario
+name: run-scenario
+goal: Run one configured local-only sandbox scenario by id, materialize the sandbox, scaffold the supervised run, invoke one bounded local worker attempt, and leave stable artifacts for review.
+
+commands:
+  - run-scenario <scenario-id>
+
+registry:
+  default_location:
+    - scenarios/
+
+scenario_manifest:
+  required_fields:
+    - scenario_id
+    - description
+    - scenario_version
+    - fixture
+    - worker_role
+    - provider
+    - model
+    - allow_remote_models
+    - reset_before_run
+    - expected_outcome
+
+  optional_fields:
+    - task
+    - policy
+    - run_id_prefix
+    - notes
+    - context_files
+    - timeout_seconds
+
+local_only_requirements:
+  required_provider: ollama
+  allow_remote_models_must_equal: false
+  failure_behavior: |
+    The runner must fail clearly rather than switching providers or falling back to any remote model path.
+
+runner_behavior:
+  - load and validate the scenario manifest
+  - enforce local-only provider settings
+  - materialize or reset the configured sandbox fixture
+  - scaffold the supervised run
+  - read the worker handoff artifact
+  - invoke one bounded local worker attempt through Ollama
+  - capture raw model output to a stable artifact
+  - attempt to extract a worker-result JSON candidate when possible
+  - stop in a reviewable state
+
+artifact_outputs:
+  - sandbox/runs/<run-id>/workspace
+  - sandbox/runs/<run-id>/artifacts/handoff/worker-handoff.json
+  - sandbox/runs/<run-id>/artifacts/worker-result/worker-result-starter.json
+  - sandbox/runs/<run-id>/artifacts/commands/worker-prompt.txt
+  - sandbox/runs/<run-id>/artifacts/commands/worker-invocation.json
+  - sandbox/runs/<run-id>/artifacts/worker-result/raw-model-output.txt
+  - sandbox/runs/<run-id>/artifacts/worker-result/worker-result.json (when valid)
+  - sandbox/runs/<run-id>/artifacts/summary/scenario-run-summary.json
+
+required_checks:
+  - name: scenario_file_exists
+    description: The requested scenario manifest exists.
+  - name: scenario_yaml_parses
+    description: The scenario manifest parses successfully.
+  - name: scenario_top_level_mapping
+    description: The scenario manifest top-level value is a mapping.
+  - name: scenario_fields_valid
+    description: Required scenario fields are present and valid.
+  - name: provider_supported
+    description: The provider is the supported local-only provider for this version.
+  - name: local_only_configured
+    description: The scenario explicitly disables remote model fallback.
+  - name: sandbox.run_root_ready
+    description: The configured sandbox run can be materialized or reset deterministically.
+  - name: supervised.supervised_run_artifacts_written
+    description: The supervised scaffold artifacts are written successfully.
+  - name: local_worker_invoked
+    description: The local worker provider is invoked once synchronously.
+  - name: scenario_summary_written
+    description: The final scenario summary artifact is written.
+
+success_definition: |
+  The scenario loads successfully, local-only provider rules are enforced, the sandbox run is materialized, the supervised scaffold is created, the local worker is invoked once, and the run artifacts are left in a stable reviewable state.
+
+failure_definition: |
+  Missing scenario manifest.
+  Invalid scenario manifest.
+  Unsupported provider.
+  Scenario allowing remote models.
+  Missing fixture, task, policy, or context files.
+  Local worker invocation failure.
+
+required_outputs:
+  - terminal_summary
+  - process_exit_code
+  - structured_result_object
+  - raw_model_output_artifact
+  - scenario_summary_artifact
+
+exit_code_contract:
+  success: 0
+  failure: nonzero
+
+non_goals: |
+  Do not add cloud providers.
+  Do not add remote fallback.
+  Do not apply code edits automatically.
+  Do not execute verification commands automatically.
+  Do not adjudicate automatically.
+  Do not build a general multi-agent runtime.
+
+implementation_notes: |
+  Reuse the sandbox materialization and supervised scaffold primitives instead of duplicating them.
+  Keep the first version synchronous, local-only, and explicit.
+  Raw model output capture is required even when worker-result extraction is conservative or incomplete.

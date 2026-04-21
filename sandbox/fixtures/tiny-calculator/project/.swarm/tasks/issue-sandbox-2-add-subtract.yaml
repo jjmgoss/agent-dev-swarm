@@ -1,0 +1,31 @@
+task_id: issue-sandbox-2
+title: Propose the subtract change for the tiny calculator fixture
+goal: Review the tiny calculator fixture and prepare a conservative local-only worker response for adding subtract.
+
+scope:
+  - Inspect src/calculator.py and tests/test_calculator.py.
+  - Describe the bounded change needed to add subtract.
+  - Produce a reviewable worker response without claiming file edits or command execution.
+
+non_goals:
+  - Do not claim that the code was changed.
+  - Do not claim that tests were run.
+  - Do not modify files outside the sandbox workspace.
+
+required_outputs:
+  - Raw local worker response artifact.
+  - Reviewable worker-result artifact or starter artifact.
+  - Clear next-step summary for a reviewer.
+
+success_criteria:
+  - The scenario captures one local worker response in stable artifacts.
+  - The worker-result state remains conservative and inspectable.
+  - The next bounded steps are explicit for follow-up execution.
+
+notes: This task is intentionally review-first. The first scenario runner does not apply code changes or execute verification commands automatically.
+allowed_roots:
+  - src
+  - tests
+verification_commands:
+  - python -m unittest discover -s tests -v
+implementation_record_path: .swarm/implementation-records/issue-sandbox-2-add-subtract.md
